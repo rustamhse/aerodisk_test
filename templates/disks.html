@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Aerodisk</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1e2430;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: x-large;
+        }
+        .content-box {
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1600px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>Аэродиск</div>
+        <div>Управление виртуальными дисками</div>
+    </div>
+
+    <div class="content-box">
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        {% if message %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endif %}
+
+        <p class="h2 text-center">
+        Таблица виртуальных дисков 
+        </p>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Диск</th>
+                    <th>Точка монтирования</th>
+                    <th>Размер</th>
+                    <th>Файловая система</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dev in devices %}
+                <tr>
+                    <td>{{ dev.name }}</td>
+                    <td>{{ dev.mountpoint or "Не примонтирован" }}</td>
+                    <td>{{ dev.size }}</td>
+                    <td>{{ dev.fstype or "—" }}</td>
+                    <td>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#mountModal{{ dev.name }}">
+                            Монтировать
+                        </button>
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#unmountModal{{ dev.name }}">
+                            Демонтировать
+                        </button>
+                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#formatModal{{ dev.name }}">
+                            Форматировать
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Модалка для монтирования -->
+                <div class="modal fade" id="mountModal{{ dev.name }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    <form method="post" action="/mount/{{ dev.name }}">
+                        <div class="modal-header">
+                        <h5 class="modal-title">Монтирование {{ dev.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                        <label class="form-label">Точка монтирования</label>
+                        <input type="text" name="mountpoint" placeholder="/mnt/{{ dev.name }}" class="form-control"/>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-success">Подтвердить</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Модалка для размонтирования -->
+                <div class="modal fade" id="unmountModal{{ dev.name }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    <form method="post" action="/unmount/{{ dev.name }}">
+                        <div class="modal-header">
+                        <h5 class="modal-title">Демонтирование {{ dev.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                        Вы уверены, что хотите демонтировать <b>{{ dev.name }}</b>?
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-danger">Демонтировать</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Модалка для форматирования -->
+                <div class="modal fade" id="formatModal{{ dev.name }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                    <form method="post" action="/format_disk/{{ dev.name }}">
+                        <div class="modal-header">
+                        <h5 class="modal-title">Форматирование {{ dev.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                        <label class="form-label">Выберите файловую систему</label>
+                        <select name="fstype" class="form-select">
+                            <option value="ext4" selected>ext4</option>
+                            <option value="xfs">xfs</option>
+                            <option value="btrfs">btrfs</option>
+                        </select>
+                        <label class="form-label"> <br> Внимание! Форматирование уничтожит все данные на диске!</label>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-warning">Форматировать</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+                </div>
+
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
